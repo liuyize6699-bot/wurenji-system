@@ -1,0 +1,100 @@
+{
+  "workflow_name": "福华创新AI飞控指挥系统",
+  "description": "智能无人机调度工作流",
+  "nodes": [
+    {
+      "id": "trigger",
+      "type": "trigger",
+      "name": "用户输入触发",
+      "config": {
+        "trigger_type": "user_message",
+        "extract_variables": [
+          {
+            "name": "target_lat",
+            "description": "目标纬度",
+            "type": "number",
+            "required": true
+          },
+          {
+            "name": "target_lng", 
+            "description": "目标经度",
+            "type": "number",
+            "required": true
+          },
+          {
+            "name": "task_type",
+            "description": "任务类型",
+            "type": "string",
+            "default": "patrol",
+            "options": ["patrol", "surveillance", "emergency", "inspection"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "format_data",
+      "type": "code",
+      "name": "数据格式化",
+      "config": {
+        "language": "javascript",
+        "code": "// 生成任务ID\nconst mission_id = 'coze_' + Date.now();\n\n// 格式化请求数据\nconst request_data = {\n  flight_data: {\n    lat: target_lat.toString(),\n    lng: target_lng.toString(),\n    mission_id: mission_id,\n    task_type: task_type || 'patrol'\n  }\n};\n\nreturn {\n  request_data: request_data,\n  mission_id: mission_id\n};"
+      },
+      "inputs": ["target_lat", "target_lng", "task_type"],
+      "outputs": ["request_data", "mission_id"]
+    },
+    {
+      "id": "call_api",
+      "type": "http_request",
+      "name": "调用飞控API",
+      "config": {
+        "method": "POST",
+        "url": "http://localhost:8000/drone/command",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{{request_data}}",
+        "timeout": 10000
+      },
+      "inputs": ["request_data"],
+      "outputs": ["api_response"]
+    },
+    {
+      "id": "process_response",
+      "type": "code", 
+      "name": "处理响应结果",
+      "config": {
+        "language": "javascript",
+        "code": "// 解析API响应\nconst response = JSON.parse(api_response);\n\nif (response.status === 'success') {\n  const result_message = `✅ 飞行任务调度成功！\\n\\n📍 任务ID: ${response.mission_id}\\n🛫 起飞机场: ${response.selected_airport}\\n🎯 目标坐标: (${response.target_coordinates.lat}, ${response.target_coordinates.lng})\\n🛩️ 飞行序列: ${response.flight_sequence.join(' → ')}\\n⏰ 创建时间: ${response.timestamp}`;\n  \n  return {\n    success: true,\n    message: result_message,\n    selected_airport: response.selected_airport,\n    mission_id: response.mission_id\n  };\n} else {\n  return {\n    success: false,\n    message: `❌ 任务调度失败: ${response.message}`,\n    error: response.message\n  };\n}"
+      },
+      "inputs": ["api_response"],
+      "outputs": ["success", "message", "selected_airport", "mission_id"]
+    },
+    {
+      "id": "reply",
+      "type": "reply",
+      "name": "回复用户",
+      "config": {
+        "message": "{{message}}"
+      },
+      "inputs": ["message"]
+    }
+  ],
+  "connections": [
+    {
+      "from": "trigger",
+      "to": "format_data"
+    },
+    {
+      "from": "format_data", 
+      "to": "call_api"
+    },
+    {
+      "from": "call_api",
+      "to": "process_response"
+    },
+    {
+      "from": "process_response",
+      "to": "reply"
+    }
+  ]
+}
