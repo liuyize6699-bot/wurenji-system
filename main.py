@@ -342,5 +342,7 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
+    # 这一行保持不变
     port = int(os.environ.get("PORT", 8000))
+    # 这一行也请检查括号和引号
     uvicorn.run(app, host="0.0.0.0", port=port)
