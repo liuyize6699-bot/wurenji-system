@@ -236,18 +236,23 @@ class DroneCommandHandler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
 
-def run_server(port=8000):
+import os
+
+def run_server(port=None):
     """启动服务器"""
+    if port is None:
+        port = int(os.environ.get("PORT", 8000))
+    
     server_address = ('', port)
     httpd = HTTPServer(server_address, DroneCommandHandler)
     
     print("=" * 60)
     print("🚁 轻语AI飞控指挥系统 (简化版)")
     print("=" * 60)
-    print(f"🌐 服务地址: http://localhost:{port}")
-    print(f"📋 系统状态: http://localhost:{port}/")
-    print(f"✈️  机场信息: http://localhost:{port}/airports")
-    print(f"❤️  健康检查: http://localhost:{port}/health")
+    print(f"🌐 服务地址: http://0.0.0.0:{port}")
+    print(f"📋 系统状态: http://0.0.0.0:{port}/")
+    print(f"✈️  机场信息: http://0.0.0.0:{port}/airports")
+    print(f"❤️  健康检查: http://0.0.0.0:{port}/health")
     print("=" * 60)
     print("按 Ctrl+C 停止服务")
     print("=" * 60)
