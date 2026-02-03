@@ -76,7 +76,7 @@ def test_multiple_scenarios():
     """测试多种场景"""
     
     print("=" * 60)
-    print("🚁 福华创新AI飞控指挥系统 - 扣子平台对接测试")
+    print("🚁 轻语AI飞控指挥系统 - 扣子平台对接测试")
     print("=" * 60)
     
     # 测试场景1：巡逻任务

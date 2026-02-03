@@ -1,6 +1,19 @@
+# Python 缓存
 __pycache__/
-*.pyc
-.venv/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
 venv/
+.venv/
+env/
+
+# 日志与临时文件
+*.log
+.DS_Store
+
+# 敏感信息
 .env
+
+# IDE 配置
 .vscode/

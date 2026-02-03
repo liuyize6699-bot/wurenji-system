@@ -117,7 +117,7 @@ def test_error_case():
 
 def main():
     """主测试函数"""
-    print("福华创新AI飞控指挥系统 - 简单测试")
+    print("轻语AI飞控指挥系统 - 简单测试")
     print("=" * 50)
     print("请确保服务器已启动: python simple_server.py")
     print("=" * 50)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-福华创新AI飞控指挥系统 - 简化版（仅使用Python标准库）
+轻语AI飞控指挥系统 - 简化版（仅使用Python标准库）
 适用于快速测试，无需安装额外依赖
 """
 
@@ -38,6 +38,43 @@ def haversine_distance(lat1, lng1, lat2, lng2):
     c = 2 * math.asin(math.sqrt(a))
     
     return R * c
+
+def calculate_eta(start_lat, start_lng, target_lat, target_lng, speed_ms=12):
+    """
+    计算预计到达时间（ETA）
+    
+    Args:
+        start_lat: 起始纬度
+        start_lng: 起始经度
+        target_lat: 目标纬度
+        target_lng: 目标经度
+        speed_ms: 无人机速度（米/秒），默认12m/s
+    
+    Returns:
+        str: 格式化的ETA时间，如"12分钟"
+    """
+    # 计算距离（米）
+    distance_km = haversine_distance(start_lat, start_lng, target_lat, target_lng)
+    distance_m = distance_km * 1000
+    
+    # 计算飞行时间（秒）
+    flight_time_seconds = distance_m / speed_ms
+    
+    # 转换为分钟
+    flight_time_minutes = flight_time_seconds / 60
+    
+    # 格式化输出
+    if flight_time_minutes < 1:
+        return "1分钟"
+    elif flight_time_minutes < 60:
+        return f"{int(flight_time_minutes)}分钟"
+    else:
+        hours = int(flight_time_minutes // 60)
+        minutes = int(flight_time_minutes % 60)
+        if minutes == 0:
+            return f"{hours}小时"
+        else:
+            return f"{hours}小时{minutes}分钟"
 
 def find_nearest_airport(target_lat, target_lng):
     """找到最近的机场"""
@@ -83,7 +120,7 @@ class DroneCommandHandler(BaseHTTPRequestHandler):
         
         if parsed_path.path == '/':
             response = {
-                "system": "福华创新AI飞控指挥系统",
+                "system": "轻语AI飞控指挥系统",
                 "status": "运行中",
                 "version": "1.0.0-simple",
                 "airports": list(AIRPORTS.keys())
@@ -113,7 +150,7 @@ class DroneCommandHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             request_data = json.loads(post_data.decode('utf-8'))
             
-            print(f"收到指令: {request_data}")
+            print("【收到无人机指令】:", request_data)
             
             # 解析目标坐标和任务信息
             target_lat, target_lng = 0.0, 0.0
@@ -154,15 +191,19 @@ class DroneCommandHandler(BaseHTTPRequestHandler):
             # 智能调度 - 选择最近机场
             selected_airport = find_nearest_airport(target_lat, target_lng)
             
-            # 构建响应
+            # 获取选定机场的坐标
+            airport_info = AIRPORTS[selected_airport]
+            airport_lat = airport_info["lat"]
+            airport_lng = airport_info["lng"]
+            
+            # 计算ETA（从机场到目标点的飞行时间）
+            eta = calculate_eta(airport_lat, airport_lng, target_lat, target_lng)
+            
+            # 构建响应 - 按照新的格式要求
             response = {
                 "status": "success",
                 "message": "指令执行成功",
-                "mission_id": mission_id,
-                "selected_airport": selected_airport,
-                "target_coordinates": {"lat": target_lat, "lng": target_lng},
-                "flight_sequence": FLIGHT_PHASES.copy(),
-                "timestamp": datetime.now().isoformat()
+                "eta": eta
             }
             
             print(f"任务 {mission_id} 处理完成，选定机场: {selected_airport}")
@@ -201,7 +242,7 @@ def run_server(port=8000):
     httpd = HTTPServer(server_address, DroneCommandHandler)
     
     print("=" * 60)
-    print("🚁 福华创新AI飞控指挥系统 (简化版)")
+    print("🚁 轻语AI飞控指挥系统 (简化版)")
     print("=" * 60)
     print(f"🌐 服务地址: http://localhost:{port}")
     print(f"📋 系统状态: http://localhost:{port}/")

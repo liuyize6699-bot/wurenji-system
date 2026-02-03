@@ -1,5 +1,5 @@
 {
-  "workflow_name": "福华创新AI飞控指挥系统",
+  "workflow_name": "轻语AI飞控指挥系统",
   "description": "智能无人机调度工作流",
   "nodes": [
     {

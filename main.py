@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="福华创新AI飞控指挥系统",
+    title="轻语AI飞控指挥系统",
     description="Coze平台对接后端 - 无人机智能调度系统",
     version="1.0.0"
 )
@@ -78,15 +78,54 @@ class CommandRequestFlat(BaseModel):
     mission_id: Optional[str] = None
     task_type: Optional[str] = "patrol"
     
+class ExecutedCommand(BaseModel):
+    """执行的指令信息"""
+    mission_id: str
+    lat: str
+    lng: str
+
 class CommandResponse(BaseModel):
     """统一响应结构"""
     status: str
     message: str
-    mission_id: str
-    selected_airport: str
-    target_coordinates: Dict[str, float]
-    flight_sequence: List[str]
-    timestamp: str
+    eta: str
+
+def calculate_eta(start_lat: float, start_lng: float, target_lat: float, target_lng: float, speed_ms: float = 12) -> str:
+    """
+    计算预计到达时间（ETA）
+    
+    Args:
+        start_lat: 起始纬度
+        start_lng: 起始经度
+        target_lat: 目标纬度
+        target_lng: 目标经度
+        speed_ms: 无人机速度（米/秒），默认12m/s
+    
+    Returns:
+        str: 格式化的ETA时间，如"12分钟"
+    """
+    # 计算距离（米）
+    distance_km = haversine_distance(start_lat, start_lng, target_lat, target_lng)
+    distance_m = distance_km * 1000
+    
+    # 计算飞行时间（秒）
+    flight_time_seconds = distance_m / speed_ms
+    
+    # 转换为分钟
+    flight_time_minutes = flight_time_seconds / 60
+    
+    # 格式化输出
+    if flight_time_minutes < 1:
+        return "1分钟"
+    elif flight_time_minutes < 60:
+        return f"{int(flight_time_minutes)}分钟"
+    else:
+        hours = int(flight_time_minutes // 60)
+        minutes = int(flight_time_minutes % 60)
+        if minutes == 0:
+            return f"{hours}小时"
+        else:
+            return f"{hours}小时{minutes}分钟"
 
 def haversine_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """
@@ -217,18 +256,22 @@ async def drone_command(request_data: Dict[str, Any]):
         # 智能调度 - 选择最近机场
         selected_airport = find_nearest_airport(target_lat, target_lng)
         
+        # 获取选定机场的坐标
+        airport_info = AIRPORTS[selected_airport]
+        airport_lat = airport_info["lat"]
+        airport_lng = airport_info["lng"]
+        
+        # 计算ETA（从机场到目标点的飞行时间）
+        eta = calculate_eta(airport_lat, airport_lng, target_lat, target_lng)
+        
         # 生成飞行序列
         flight_sequence = generate_flight_sequence()
         
-        # 构建响应
+        # 构建响应 - 按照新的格式要求
         response = CommandResponse(
             status="success",
             message="指令执行成功",
-            mission_id=mission_id,
-            selected_airport=selected_airport,
-            target_coordinates={"lat": target_lat, "lng": target_lng},
-            flight_sequence=flight_sequence,
-            timestamp=datetime.now().isoformat()
+            eta=eta
         )
         
         # WebSocket广播
@@ -275,7 +318,7 @@ async def root():
     根路径 - 系统状态
     """
     return {
-        "system": "福华创新AI飞控指挥系统",
+        "system": "轻语AI飞控指挥系统",
         "status": "运行中",
         "version": "1.0.0",
         "airports": list(AIRPORTS.keys()),

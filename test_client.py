@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-福华创新AI飞控指挥系统 - 测试客户端
+轻语AI飞控指挥系统 - 测试客户端
 """
 
 import requests
@@ -122,7 +122,7 @@ async def test_websocket():
 
 def main():
     """主测试函数"""
-    print("福华创新AI飞控指挥系统 - 功能测试")
+    print("轻语AI飞控指挥系统 - 功能测试")
     print("=" * 50)
     
     # 测试系统状态
