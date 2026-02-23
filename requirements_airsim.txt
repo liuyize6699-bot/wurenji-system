@@ -1,0 +1,20 @@
+# AirSim 相关依赖
+# 注意：AirSim 官方支持 Python 3.5-3.8，对更高版本支持有限
+# 以下是尽可能兼容 Python 3.10+ 的配置
+
+# NumPy - 使用兼容 Python 3.10+ 的版本
+numpy>=1.21.0,<2.0.0
+
+# AirSim - 使用最新的社区维护版本
+# 官方版本：airsim==1.8.1（可能不兼容 Python 3.10+）
+# 替代方案：使用 msgpack-rpc-python 和手动安装
+msgpack-rpc-python>=0.4.1
+
+# AirSim 的其他依赖
+msgpack>=1.0.0
+opencv-python>=4.5.0
+Pillow>=9.0.0
+
+# 如果需要使用 AirSim 的完整功能
+# 可以尝试从源码安装或使用兼容的 fork
+# airsim @ git+https://github.com/microsoft/AirSim.git@main#subdirectory=PythonClient
