@@ -18,7 +18,28 @@ app = FastAPI(
     description="Coze平台对接后端 - 无人机智能调度系统",
     version="1.0.0"
 )
+# --- 📝 新增：无人机指令中转逻辑 ---
+# 1. 定义全局变量（建议放在 AIRPORTS 下方）
+latest_task = {"location": None}
 
+# 2. 定义数据模型（放在代码顶部的 BaseModel 区域或此处）
+class DroneTask(BaseModel):
+    location: str
+
+# 3. 接口 A：供 Coze 调用，发送任务
+@app.post("/send_task")
+async def send_task(task: DroneTask):
+    latest_task["location"] = task.location
+    logger.info(f"🛰️ 接收到云端新任务: {task.location}")
+    return {"status": "success", "received": task.location}
+
+# 4. 接口 B：供本地 listener.py 调用，取走任务
+@app.get("/get_task")
+async def get_task():
+    task = latest_task["location"]
+    latest_task["location"] = None # 取走后立即重置，防止无人机原地复读
+    return {"location": task}
+# --- 📝 结束新增 ---
 # CORS配置
 app.add_middleware(
     CORSMiddleware,
