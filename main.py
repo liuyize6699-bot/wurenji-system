@@ -18,6 +18,7 @@ app = FastAPI(
     description="Coze平台对接后端 - 无人机智能调度系统",
     version="1.0.0"
 )
+
 # --- 📝 新增：无人机指令中转逻辑 ---
 # 1. 定义全局变量（建议放在 AIRPORTS 下方）
 latest_task = {"location": None}
@@ -183,6 +184,9 @@ async def drone_command(request_data: Dict[str, Any]):
                 "timestamp": datetime.now().isoformat()
             }
         }
+# --- 关键修改：将计算出的机场存入信箱，供本地 listener.py 取走 ---
+        latest_task["location"] = selected_airport 
+        # ---------------------------------------------------------
         await manager.broadcast(websocket_payload)
         
         return CommandResponse(status="success", message="指令执行成功", eta=eta)
